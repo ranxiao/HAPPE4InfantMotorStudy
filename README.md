@@ -1,5 +1,6 @@
 # HAPPE4InfantMotorStudy
-# Ran Xiao, ran.xiao@duke.edu Duke University, April 2021
+Ran Xiao, ran.xiao@duke.edu Duke University, April 2021
+
 Adaptation of HAPPE pipeline to Biosemi EEG data from the Infant motor study. 
 
 Download HAPPE Pipeline, https://github.com/lcnhappe/happe
