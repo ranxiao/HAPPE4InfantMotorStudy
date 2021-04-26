@@ -11,5 +11,6 @@ When first time using HAPPE
 2. Run EEGLab with commandline first and be sure to install the biosemi plugin for the EEGlab.
 3. Make sure to change Memory Allocation Setting in EEGLAB the same as the one listed in HAPPE readme file, otherwise memory error will occur.
 4. Copy Event time CSV files into the working direcotry, or change LatencyDir to correponding one. 
-5. make changes of working directory in the ProprocessingWithHAPPE.m code to your local directory.
+5. Copy all .bdf files to be processed in one folder under working diretory.
+6. make changes of directory variables in the ProprocessingWithHAPPE.m code.
 
