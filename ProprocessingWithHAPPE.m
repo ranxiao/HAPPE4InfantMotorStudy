@@ -6,9 +6,12 @@
 
 %%   10 USER INPUTS TO EDIT:
 % 1. enter path to the folder that has the datasets you want to analyze
-src_folder_name='/Users/rx35/Documents/MATLAB/USC_EEG/NetworkAnalysis_TD_2021/TD_SampleData/';
-LatencyDir = '/Users/rx35/Documents/MATLAB/USC_EEG/Latencies/'; % event time
-chanFile = '/Users/rx35/Documents/MATLAB/USC_EEG/NetworkAnalysis_TD_2021/BioSemi_32Ch.ced';% channel location
+% enter your working directory here
+wd = 'C:/Users/rapiduser/Documents/InfantMotor/';
+src_folder_name=strcat(wd,'TD/');
+LatencyDir = strcat(wd,'Latencies/'); % event time
+chanFile = strcat(wd,'BioSemi_32Ch.ced');% channel location
+happe_directory_path = strcat(wd,'happe-master');% copy happe-master downloaded from github to working directory.
 
 % 1.1 Define events in the data to select based on activity files
 % Pulls time of all activities from csv and return 28 time points in the following order:
@@ -128,8 +131,6 @@ end
 %% add relevant folders to path
 
 % add HAPPE script path
-happe_directory_path = '/Users/rx35/Documents/MATLAB/happe-master';
-
 % will eventually allow users to set own eeglab path -- for now, assume
 % using eeglab14_0_0b included in HAPPE 
 eeglab_path = [happe_directory_path filesep 'Packages' filesep 'eeglab14_0_0b'];
@@ -158,7 +159,7 @@ if layout_type ==1
 elseif layout_type ==2
     chan_locations = [happe_directory_path filesep 'acquisition_layout_information' filesep 'GSN-HydroCel-128.sfp'];
 elseif layout_type ==3
-    chan_locations = [happe_directory_path filesep 'acquisition_layout_information' filesep 'BioSemi_32Ch.ced'];
+    chan_locations = chanFile;
     
 else
     error ('Invalid sensor layout selection. Users wishing to use an unsupported layout can run HAPPE through\n%s',...
@@ -174,7 +175,7 @@ FileNames=dir(strcat(src_folder_name,['*' src_file_ext]));
 FileNames={FileNames.name};
 
 % intialize report metrics
-chan_index=[1:length(chan_IDs)];
+chan_index=1:length(chan_IDs);
 Number_ICs_Rejected=[];
 Number_Good_Channels_Selected=[];
 Interpolated_Channel_IDs=[];
@@ -190,8 +191,9 @@ Min_Artifact_Probability_of_Kept_ICs=[];
 Max_Artifact_Probability_of_Kept_ICs=[];
 Number_Segments_Post_Segment_Rejection=[];
 
+FileSkipped = {};
 %iterate the following preprocessing pipeline over all your data files:
-for current_file = 4:length(FileNames)
+for current_file = 1:length(FileNames)
     try  
     %% load file and get sampling rate, save with double precision
     % import data into eeglab and store the file's length in seconds for outputting later
@@ -305,7 +307,8 @@ for current_file = 4:length(FileNames)
     EEG = pop_importdata('dataformat','matlab','nbchan',0,'data',strrep([src_folder_name 'intermediate1_wavclean/', FileNames{current_file}],src_file_ext,'_wavclean.mat'),'srate',srate,'pnts',0,'xmin',0,'chanlocs',selected_channel_locations);
     EEG.setname='wavcleanedEEG';
     EEG = eeg_checkset( EEG );
-    
+    % eeglab redraw;
+
     % import event tags if needed
     if task_EEG_processing == 1
         EEG.event=events;
@@ -479,9 +482,12 @@ for current_file = 4:length(FileNames)
         Min_Artifact_Probability_of_Kept_ICs(current_file)=0;
         Max_Artifact_Probability_of_Kept_ICs(current_file)=0;
         Number_Segments_Post_Segment_Rejection(current_file)=0;
-        
+        disp(sprintf('File %d skipped',current_file));
+        FileSkipped = [FileSkipped FileNames{current_file}];
+
         continue;
     end
+        disp(sprintf('File %d finished',current_file));
 end
 
 %% generate output table in the "preprocessed" subfolder listing the subject file name and relevant variables for assesssing how good/bad that datafile was and how well the pipeline worked
@@ -498,4 +504,6 @@ outputtable.Properties.VariableNames ={'FileNames','File_Length_In_Secs','Number
 
 rmpath(genpath(cleanline_path));
 writetable(outputtable, [src_folder_name 'HAPPE_all_subs_output_table ',datestr(now,'dd-mm-yyyy'),'.csv']);
+
+save(strcat(src_folder_name,'processed/FileSkipped.mat'),'FileSkipped');
 
