@@ -8,7 +8,7 @@
 % 1. enter path to the folder that has the datasets you want to analyze
 % enter your working directory here
 wd = 'C:/Users/rapiduser/Documents/InfantMotor/';
-src_folder_name=strcat(wd,'TD/');
+src_folder_name=strcat(wd,'AR/');
 LatencyDir = strcat(wd,'Latencies/'); % event time
 chanFile = strcat(wd,'BioSemi_32Ch.ced');% channel location
 happe_directory_path = strcat(wd,'happe-master');% copy happe-master downloaded from github to working directory.
@@ -398,20 +398,27 @@ for current_file = 1:length(FileNames)
         end
     
         % rejection of bad segments using amplitude-based and joint probability artifact detection
-        if ROI_channels_only == 0
-            EEG = pop_eegthresh(EEG,1,[1:EEG.nbchan] ,[reject_min_amp],[reject_max_amp],[EEG.xmin],[EEG.xmax],2,0);
-            EEG = pop_jointprob(EEG,1,[1:EEG.nbchan],3,3,pipeline_visualizations_semiautomated,...
-                0,pipeline_visualizations_semiautomated,[],pipeline_visualizations_semiautomated);
-        else
-            EEG = pop_eegthresh(EEG,1,[ROI_indices_in_selected_chanlocs]',[reject_min_amp],[reject_max_amp],[EEG.xmin],[EEG.xmax],2,0);
-            EEG = pop_jointprob(EEG,1,[ROI_indices_in_selected_chanlocs]',3,3,pipeline_visualizations_semiautomated,...
-                0,pipeline_visualizations_semiautomated,[],pipeline_visualizations_semiautomated);
-        end
+        if segment_rejection == 1 % Ran: adding a condition to determine whether to reject segments
+            if ROI_channels_only == 0
+                EEG = pop_eegthresh(EEG,1,[1:EEG.nbchan] ,[reject_min_amp],[reject_max_amp],[EEG.xmin],[EEG.xmax],2,0);
+                EEG = pop_jointprob(EEG,1,[1:EEG.nbchan],3,3,pipeline_visualizations_semiautomated,...
+                    0,pipeline_visualizations_semiautomated,[],pipeline_visualizations_semiautomated);
+            else
+                EEG = pop_eegthresh(EEG,1,[ROI_indices_in_selected_chanlocs]',[reject_min_amp],[reject_max_amp],[EEG.xmin],[EEG.xmax],2,0);
+                EEG = pop_jointprob(EEG,1,[ROI_indices_in_selected_chanlocs]',3,3,pipeline_visualizations_semiautomated,...
+                    0,pipeline_visualizations_semiautomated,[],pipeline_visualizations_semiautomated);
+            end
 
-        EEG = eeg_rejsuperpose(EEG, 1, 0, 1, 1, 1, 1, 1, 1);
-        EEG = pop_rejepoch(EEG, [EEG.reject.rejglobal] ,0);
-        EEG = eeg_checkset(EEG );
-        EEG = pop_saveset(EEG, 'filename',strrep(FileNames{current_file}, src_file_ext,'_segments_postreject.set'),'filepath',[src_folder_name filesep 'intermediate3_segmented']);
+            EEG = eeg_rejsuperpose(EEG, 1, 0, 1, 1, 1, 1, 1, 1);
+            EEG = pop_rejepoch(EEG, [EEG.reject.rejglobal] ,0);
+            EEG = eeg_checkset(EEG );
+            EEG = pop_saveset(EEG, 'filename',strrep(FileNames{current_file}, src_file_ext,'_segments_postreject.set'),'filepath',[src_folder_name filesep 'intermediate3_segmented']);
+            
+            % Ran: save flags for whether each segment is rejected for
+            % later analysis
+            rejFlag = EEG.reject.rejglobal;
+            save([src_folder_name filesep 'intermediate3_segmented/' strrep(FileNames{current_file}, src_file_ext,'_segments_rejectFlag.mat')],'rejFlag')
+        end
     end
     %% interpolate the channels that were flagged as bad earlier:
     EEG = pop_interp(EEG, full_selected_channels, 'spherical');
