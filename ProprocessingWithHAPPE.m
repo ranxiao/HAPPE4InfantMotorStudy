@@ -410,13 +410,14 @@ for current_file = 1:length(FileNames)
             end
 
             EEG = eeg_rejsuperpose(EEG, 1, 0, 1, 1, 1, 1, 1, 1);
+            rejFlag = EEG.reject.rejglobal; %Ran: save flags to a variable indicating whether each epoch has been marked for rejection.
+
             EEG = pop_rejepoch(EEG, [EEG.reject.rejglobal] ,0);
             EEG = eeg_checkset(EEG );
             EEG = pop_saveset(EEG, 'filename',strrep(FileNames{current_file}, src_file_ext,'_segments_postreject.set'),'filepath',[src_folder_name filesep 'intermediate3_segmented']);
             
             % Ran: save flags for whether each segment is rejected for
             % later analysis
-            rejFlag = EEG.reject.rejglobal;
             save([src_folder_name filesep 'intermediate3_segmented/' strrep(FileNames{current_file}, src_file_ext,'_segments_rejectFlag.mat')],'rejFlag')
         end
     end
